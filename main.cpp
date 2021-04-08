@@ -15,6 +15,8 @@ public:
     // construtor: abre arquivo. Essa aplicacao deveria ler o arquivo se existente ou criar um novo.
     // Entretando recriaremos o arquivo a cada execucao ("w+").
     MeuArquivo() {
+        this->cabecalho.quantidade = 0;
+        this->cabecalho.disponivel = -1;
         fd = fopen("dados.dat","w+");
     }
 
@@ -28,6 +30,7 @@ public:
         this->substituiBarraNporBarraZero(palavra); // funcao auxiliar substitui terminador por \0
 
         // implementar aqui
+        fwrite(palavra, sizeof(palavra), 1, this->fd);
     }
 
     // Marca registro como removido, atualiza lista de disponíveis, incluindo o cabecalho
