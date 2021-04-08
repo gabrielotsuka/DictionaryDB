@@ -1,6 +1,10 @@
-/* 
- * File:   main.cpp
- * Author: seunome
+/* desenvolvido e testado em ambiente Linux.
+ * 
+ * Autores: 
+ *   - Gabriel José Bueno Otsuka          11721BCC018
+ *   - Marcos Felipe Belisário            11811BCC020
+ *   - Pedro Henrique Bufulin de Almeida  11711BCC028
+ *
  */
 
 #include <stdlib.h>
