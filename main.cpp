@@ -7,9 +7,12 @@
  *
  */
 
+#include <algorithm>  
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+
+using namespace std;
 
 class MeuArquivo {
 public:
@@ -22,7 +25,9 @@ public:
         this->cabecalho.quantidade = 0;
         this->cabecalho.disponivel = -1;
         fd = fopen("dados.dat","w+");
-    }
+
+        fwrite(&this->cabecalho, sizeof(this->cabecalho), 1, this->fd);
+        }
 
     // Destrutor: fecha arquivo
     ~MeuArquivo() {
@@ -33,8 +38,15 @@ public:
     void inserePalavra(char *palavra) {
         this->substituiBarraNporBarraZero(palavra); // funcao auxiliar substitui terminador por \0
 
-        // implementar aqui
-        fwrite(palavra, sizeof(palavra), 1, this->fd);
+        int sz = strlen(palavra);
+        sz = max(sz, (int) sizeof(int));
+        
+        fwrite(&sz, sizeof(int), 1, this->fd);
+        char space = ' ';
+        fwrite(&space, sizeof(char), 1, this->fd);
+        fwrite(palavra, sz+1, 1, this->fd);
+
+
     }
 
     // Marca registro como removido, atualiza lista de disponíveis, incluindo o cabecalho
