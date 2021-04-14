@@ -42,16 +42,31 @@ public:
         sz = max(sz, (int) sizeof(int)) + 1;
         
         fwrite(&sz, sizeof(int), 1, this->fd);
-        char space = ' ';
-        fwrite(&space, sizeof(char), 1, this->fd);
+        char flag = ' ';
+        fwrite(&flag, sizeof(char), 1, this->fd);
         fwrite(palavra, sz, 1, this->fd);
-
-
     }
 
     // Marca registro como removido, atualiza lista de disponíveis, incluindo o cabecalho
     void removePalavra(int offset) {
-        // implementar aqui
+        //Vai ao início e muda o cabeçalho
+        fseek(this->fd, 0, SEEK_SET);
+        int qtd;
+        fread(&qtd, sizeof(int), 1, this->fd);
+        fseek(this->fd, -sizeof(int), SEEK_CUR);
+        qtd -= 1;
+        fwrite(&qtd, sizeof(int), 1, this->fd);
+
+        //Pega o segundo elemento do cabeçalho e substitui pelo offset da nova palavra deletada
+        int lastDeletedOffset;
+        fread(&lastDeletedOffset, sizeof(int), 1, this->fd);
+        fseek(this->fd, -sizeof(int), SEEK_CUR);
+        fwrite(&offset, sizeof(int), 1, this->fd);
+
+        fseek(this->fd, offset - sizeof(char), SEEK_SET);
+        char flag='*';
+        fwrite(&flag, sizeof(char), 1, this->fd);
+        fwrite(&lastDeletedOffset, sizeof(int), 1, this->fd);
     }
 
     // BuscaPalavra: retorno é o offset para o registro
@@ -59,10 +74,9 @@ public:
     int buscaPalavra(char *palavra) {
         this->substituiBarraNporBarraZero(palavra); // funcao auxiliar substitui terminador por \0
 
-        rewind(this->fd);
+        fseek(this->fd, sizeof(int) * 2, SEEK_SET);
         int cont = 0;
         while (!feof(this->fd)){
-            printf("cont -> %d\n", cont++);
             int sz;
             fread(&sz, sizeof(int), 1, this->fd);
             char flag;
