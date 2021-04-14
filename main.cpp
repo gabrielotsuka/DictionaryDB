@@ -27,7 +27,7 @@ public:
         fd = fopen("dados.dat","w+");
 
         fwrite(&this->cabecalho, sizeof(this->cabecalho), 1, this->fd);
-        }
+    }
 
     // Destrutor: fecha arquivo
     ~MeuArquivo() {
@@ -39,14 +39,12 @@ public:
         this->substituiBarraNporBarraZero(palavra); // funcao auxiliar substitui terminador por \0
 
         int sz = strlen(palavra);
-        sz = max(sz, (int) sizeof(int));
+        sz = max(sz, (int) sizeof(int)) + 1;
         
         fwrite(&sz, sizeof(int), 1, this->fd);
         char space = ' ';
         fwrite(&space, sizeof(char), 1, this->fd);
-        fwrite(palavra, sz+1, 1, this->fd);
-
-
+        fwrite(palavra, sz, 1, this->fd);
     }
 
     // Marca registro como removido, atualiza lista de disponíveis, incluindo o cabecalho
@@ -92,12 +90,14 @@ int main(int argc, char** argv) {
     while (!feof(f)) {
         fgets(palavra,50,f);
         arquivo->inserePalavra(palavra);
+        puts(palavra);
     }
 
     // fechar arquivo dicionario.txt
     fclose(f);
 
     printf("Arquivo criado.\n\n");
+    return 0;
 
     char opcao;
     do {
