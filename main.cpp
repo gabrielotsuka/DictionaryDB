@@ -34,13 +34,15 @@ public:
     void inserePalavra(char *palavra) {
         this->substituiBarraNporBarraZero(palavra); // funcao auxiliar substitui terminador por \0
 
-        int sz = strlen(palavra);
+        int sz = strlen(palavra); //é o tamanho exato da palavra
         sz = max(sz, (int) sizeof(int)) + 1;
         
         fwrite(&sz, sizeof(int), 1, this->fd);
         char space = ' ';
         fwrite(&space, sizeof(char), 1, this->fd);
         fwrite(palavra, sz, 1, this->fd);
+
+
     }
 
     // Marca registro como removido, atualiza lista de disponíveis, incluindo o cabecalho
@@ -53,7 +55,24 @@ public:
     int buscaPalavra(char *palavra) {
         this->substituiBarraNporBarraZero(palavra); // funcao auxiliar substitui terminador por \0
 
-        // implementar aqui
+        rewind(this->fd);
+        int cont = 0;
+        while (!feof(this->fd)){
+            printf("cont -> %d\n", cont++);
+            int sz;
+            fread(&sz, sizeof(int), 1, this->fd);
+            char flag;
+            fread(&flag, sizeof(char), 1, this->fd);
+            if(flag == '*') {
+                fseek(this->fd, sz, SEEK_CUR);
+                continue;
+            }
+            char now[sz];
+            fread(now, sz, 1, this->fd);
+            if(strcmp(palavra, now) == 0) {
+                return ftell(this->fd);
+            }
+        }
 
         // retornar -1 caso nao encontrar
         return -1;
@@ -86,14 +105,12 @@ int main(int argc, char** argv) {
     while (!feof(f)) {
         fgets(palavra,50,f);
         arquivo->inserePalavra(palavra);
-        puts(palavra);
     }
 
     // fechar arquivo dicionario.txt
     fclose(f);
 
     printf("Arquivo criado.\n\n");
-    return 0;
 
     char opcao;
     do {
