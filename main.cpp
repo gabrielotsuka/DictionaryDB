@@ -1,11 +1,11 @@
-/* desenvolvido e testado em ambiente Linux.
- * 
- * Autores: 
- *   - Gabriel José Bueno Otsuka          11721BCC018
- *   - Marcos Felipe Belisário            11811BCC020
- *   - Pedro Henrique Bufulin de Almeida  11711BCC028
- *
- */
+/* 
+desenvolvido e testado em ambiente Linux.
+ 
+Autores: 
+    - Gabriel José Bueno Otsuka          11721BCC018
+    - Marcos Felipe Belisário            11811BCC020
+    - Pedro Henrique Bufulin de Almeida  11711BCC028
+*/
 
 #include <algorithm>  
 #include <stdlib.h>
@@ -17,16 +17,16 @@ using namespace std;
 class MeuArquivo {
 public:
     struct cabecalho { int quantidade; int disponivel; } cabecalho;
-    struct registro { int sz; char flag; char* palavra; } registro;
+    struct registro { int size; char flag; char* palavra; } registro;
 
     // construtor: abre arquivo. Essa aplicacao deveria ler o arquivo se existente ou criar um novo.
     // Entretando recriaremos o arquivo a cada execucao ("w+").
     MeuArquivo() {
-        this->cabecalho.quantidade = 0;
-        this->cabecalho.disponivel = -1;
+        cabecalho.quantidade = 0;
+        cabecalho.disponivel = -1;
         fd = fopen("dados.dat","w+");
 
-        fwrite(&this->cabecalho, sizeof(this->cabecalho), 1, this->fd);
+        fwrite(&cabecalho, sizeof(cabecalho), 1, fd);
     }
 
     // Destrutor: fecha arquivo
@@ -36,77 +36,58 @@ public:
 
     // Insere uma nova palavra, consulta se há espaco disponível ou se deve inserir no final
     void inserePalavra(char *palavra) {
-        this->substituiBarraNporBarraZero(palavra); // funcao auxiliar substitui terminador por \0
+        substituiBarraNporBarraZero(palavra); // funcao auxiliar substitui terminador por \0
 
-        fseek(this->fd, 0, SEEK_SET);
-        fread(&this->cabecalho, sizeof(struct cabecalho), 1, this->fd);
-        this->cabecalho.quantidade += 1;
-        
-        int current = this->cabecalho.disponivel;
-        while (current != -1) {
-            fseek(this->fd, current - (sizeof(int) + sizeof(char)), SEEK_SET);
-            int sz;
-            fread(&sz, sizeof(int), 1, this->fd);
-            if(sz >= strlen(palavra)+1) {
-                char flag = ' ';
-                fwrite(&flag, sizeof(char), 1, this->fd);
-                fwrite(palavra, sz, 1, this->fd);
-            }
-            fseek(this->fd, sizeof(char), SEEK_CUR);
-            int next;
-            fread(now, sz, 1, this->fd);
-        }
+        int sz = strlen(palavra);
+        registro.size = max(sz, (int) sizeof(int)); //Ao ser excluído,campo palavra armazenará int
+        registro.flag = ' ';
+        registro.palavra = palavra;
 
-        int sz = strlen(palavra); //é o tamanho exato da palavra
-        sz = max(sz, (int) sizeof(int)) + 1;
-        fwrite(&sz, sizeof(int), 1, this->fd);
-        char flag = ' ';
-        fwrite(&flag, sizeof(char), 1, this->fd);
-        fwrite(palavra, sz, 1, this->fd);
+        // printf("%d%c%s", registro.size, registro.flag, registro.palavra);
+
+        fwrite(&registro, sizeof(registro), 1, fd);
     }
 
     // Marca registro como removido, atualiza lista de disponíveis, incluindo o cabecalho
     void removePalavra(int offset) {
         //Vai ao início e muda o cabeçalho
-        fseek(this->fd, 0, SEEK_SET);
+        fseek(fd, 0, SEEK_SET);
         int qtd;
-        fread(&qtd, sizeof(int), 1, this->fd);
-        fseek(this->fd, -sizeof(int), SEEK_CUR);
+        fread(&qtd, sizeof(int), 1, fd);
+        fseek(fd, -sizeof(int), SEEK_CUR);
         qtd -= 1;
-        fwrite(&qtd, sizeof(int), 1, this->fd);
+        fwrite(&qtd, sizeof(int), 1, fd);
 
         //Pega o segundo elemento do cabeçalho e substitui pelo offset da nova palavra deletada
         int lastDeletedOffset;
-        fread(&lastDeletedOffset, sizeof(int), 1, this->fd);
-        fseek(this->fd, -sizeof(int), SEEK_CUR);
-        fwrite(&offset, sizeof(int), 1, this->fd);
+        fread(&lastDeletedOffset, sizeof(int), 1, fd);
+        fseek(fd, -sizeof(int), SEEK_CUR);
+        fwrite(&offset, sizeof(int), 1, fd);
 
-        fseek(this->fd, offset - sizeof(char), SEEK_SET);
+        fseek(fd, offset - sizeof(char), SEEK_SET);
         char flag='*';
-        fwrite(&flag, sizeof(char), 1, this->fd);
-        fwrite(&lastDeletedOffset, sizeof(int), 1, this->fd);
+        fwrite(&flag, sizeof(char), 1, fd);
+        fwrite(&lastDeletedOffset, sizeof(int), 1, fd);
     }
 
     // BuscaPalavra: retorno é o offset para o registro
     // Nao deve considerar registro removido
     int buscaPalavra(char *palavra) {
-        this->substituiBarraNporBarraZero(palavra); // funcao auxiliar substitui terminador por \0
+        substituiBarraNporBarraZero(palavra); // funcao auxiliar substitui terminador por \0
 
-        fseek(this->fd, sizeof(int) * 2, SEEK_SET);
-        int cont = 0;
-        while (!feof(this->fd)){
-            int sz;
-            fread(&sz, sizeof(int), 1, this->fd);
-            char flag;
-            fread(&flag, sizeof(char), 1, this->fd);
-            if(flag == '*') {
-                fseek(this->fd, sz, SEEK_CUR);
+        fseek(fd, sizeof(cabecalho), SEEK_SET);
+        while (!feof(fd)){
+            fread(&registro.size, sizeof(int), 1, fd);
+            fread(&registro.flag, sizeof(char), 1, fd);
+            printf("%c\n", registro.flag);
+            if(registro.flag == '*') {
+                fseek(fd, registro.size, SEEK_CUR);
                 continue;
             }
-            char now[sz];
-            fread(now, sz, 1, this->fd);
-            if(strcmp(palavra, now) == 0) {
-                return ftell(this->fd) - sz;
+            registro.palavra = (char*) malloc(registro.size);
+            fread(registro.palavra, registro.size, 1, fd);
+            if(strcmp(palavra, registro.palavra) == 0) {
+                return ftell(fd);
             }
         }
 

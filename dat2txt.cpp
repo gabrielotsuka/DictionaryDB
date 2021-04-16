@@ -1,6 +1,8 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 struct cabecalho { int quantidade; int disponivel; } cabecalho;
+struct registro { int size; char flag; char* palavra; } registro;
 
 int main() {
     FILE* data = fopen("dados.dat", "rb");
@@ -15,14 +17,12 @@ int main() {
     printf("%d %d\n", cabecalho.quantidade, cabecalho.disponivel);
 
     while(!feof(data)) {
-        int qtd;
-        if (fread(&qtd, sizeof(int), 1, data) < 0) break;
-        printf("int %d\n", qtd);
-        char divider;
-        if (fread(&divider, sizeof(char), 1, data) < 0) break;
-        printf("char %c\n", divider);
-        char palavra[qtd];
-        if (fread(&palavra, qtd, 1, data) < 0) break;
-        printf("string %s\n", palavra);
+        fread(&registro.size, sizeof(int), 1, data);
+        printf("int %d\n", registro.size);
+        fread(&registro.flag, sizeof(char), 1, data);
+        printf("char %c\n", registro.flag);
+        registro.palavra = (char*) malloc(registro.size + sizeof(char));
+        fread(registro.palavra, registro.size + sizeof(char), 1, data);
+        printf("string %s\n", registro.palavra);
     }
 }
