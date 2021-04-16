@@ -17,7 +17,7 @@ using namespace std;
 class MeuArquivo {
 public:
     struct cabecalho { int quantidade; int disponivel; } cabecalho;
-    struct registro { int quantidade; int disponivel; } registro;
+    struct registro { int sz; char flag; char* palavra; } registro;
 
     // construtor: abre arquivo. Essa aplicacao deveria ler o arquivo se existente ou criar um novo.
     // Entretando recriaremos o arquivo a cada execucao ("w+").
@@ -38,9 +38,27 @@ public:
     void inserePalavra(char *palavra) {
         this->substituiBarraNporBarraZero(palavra); // funcao auxiliar substitui terminador por \0
 
+        fseek(this->fd, 0, SEEK_SET);
+        fread(&this->cabecalho, sizeof(struct cabecalho), 1, this->fd);
+        this->cabecalho.quantidade += 1;
+        
+        int current = this->cabecalho.disponivel;
+        while (current != -1) {
+            fseek(this->fd, current - (sizeof(int) + sizeof(char)), SEEK_SET);
+            int sz;
+            fread(&sz, sizeof(int), 1, this->fd);
+            if(sz >= strlen(palavra)+1) {
+                char flag = ' ';
+                fwrite(&flag, sizeof(char), 1, this->fd);
+                fwrite(palavra, sz, 1, this->fd);
+            }
+            fseek(this->fd, sizeof(char), SEEK_CUR);
+            int next;
+            fread(now, sz, 1, this->fd);
+        }
+
         int sz = strlen(palavra); //é o tamanho exato da palavra
         sz = max(sz, (int) sizeof(int)) + 1;
-        
         fwrite(&sz, sizeof(int), 1, this->fd);
         char flag = ' ';
         fwrite(&flag, sizeof(char), 1, this->fd);
@@ -88,7 +106,7 @@ public:
             char now[sz];
             fread(now, sz, 1, this->fd);
             if(strcmp(palavra, now) == 0) {
-                return ftell(this->fd);
+                return ftell(this->fd) - sz;
             }
         }
 
