@@ -11,18 +11,23 @@ int main() {
         return 0;
     }
 
-    fread(&cabecalho, sizeof(cabecalho), 1, data);
+    fread(&cabecalho, sizeof(struct cabecalho), 1, data);
     printf("%d %d\n", cabecalho.quantidade, cabecalho.disponivel);
 
     while(!feof(data)) {
         int qtd;
         if (fread(&qtd, sizeof(int), 1, data) < 0) break;
-        printf("int %d\n", qtd);
         char divider;
         if (fread(&divider, sizeof(char), 1, data) < 0) break;
-        printf("char %c\n", divider);
+        if(divider == '*'){
+            int next;
+            fread(&next, sizeof(int), 1, data);
+            fseek(data, qtd-sizeof(int), SEEK_CUR);
+            printf("%d|%c|%d\n", qtd, divider, next);
+            continue ;
+        }
         char palavra[qtd];
         if (fread(&palavra, qtd, 1, data) < 0) break;
-        printf("string %s\n", palavra);
+        printf("%d|%c|%s\n", qtd, divider, palavra);
     }
 }
